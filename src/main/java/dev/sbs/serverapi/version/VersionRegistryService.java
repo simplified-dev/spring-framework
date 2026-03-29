@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.util.pattern.PathPattern;
 
 import java.util.regex.Matcher;
@@ -27,7 +28,7 @@ public class VersionRegistryService {
 
     private static final @NotNull Pattern VERSION_PREFIX = Pattern.compile("^/v(\\d+)(/.*)$");
 
-    private final @NotNull ApiVersionHandlerMapping handlerMapping;
+    private final @NotNull RequestMappingHandlerMapping handlerMapping;
     private @NotNull ConcurrentMap<String, ConcurrentSet<Integer>> versionedPaths = Concurrent.newMap();
 
     @PostConstruct
