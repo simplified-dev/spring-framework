@@ -32,6 +32,7 @@ dependencies {
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)
     testImplementation(libs.junit.platform.launcher)
+    testImplementation(libs.spring.boot.test)
 
     // Exported dependencies (available to consumers)
     api("dev.sbs:api:0.1.0")

@@ -56,6 +56,14 @@ See the root [`CLAUDE.md`](../CLAUDE.md) for multi-module build commands, enviro
 - `error-page.css` - Minified CSS from [donlon/cloudflare-error-page](https://github.com/donlon/cloudflare-error-page) (MIT license).
 - `error-page.html` - HTML template with named `{{PLACEHOLDER}}` tokens.
 
+### Test Source (`src/test/`)
+
+**`TestServer`** - Minimal `@SpringBootApplication` for testing the framework. Boots a lightweight server with API versioning, API key authentication, error handling, and the test controllers. Uses `ServerConfig.builder()` defaults with SpringDoc disabled. Run `main()` from the IDE to start on port 8080.
+
+**`controller/`** - Test controllers exercising framework features:
+- `TestApiKeyController` - Endpoints under `/api/` demonstrating `@ApiKeyProtected` with `ApiKeyRole` requirements (`ADMIN`, `DEVELOPER`, `USER`).
+- `TestVersionController` - Endpoints demonstrating `@ApiVersion` with multiple versions (`/v1/hello`, `/v2/hello`, `/v3/hello`, `/v1/data`, `/v2/data`) and an unversioned `/default` endpoint.
+
 ### Consumer Usage
 
 Consumers must scan the `dev.sbs.serverapi` package for Spring to pick up configuration beans:

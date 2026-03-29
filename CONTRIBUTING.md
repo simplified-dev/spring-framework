@@ -144,7 +144,7 @@ sliding window counter rejects a request.
 
 ### Testing
 
-Tests use JUnit 5 (Jupiter):
+Tests use JUnit 5 (Jupiter) with Spring Boot Test for integration tests:
 
 ```bash
 ./gradlew test
@@ -154,6 +154,13 @@ Tests use JUnit 5 (Jupiter):
 - Unit tests for interceptors, services, and configuration don't require a
   running Spring context - prefer plain JUnit tests over `@SpringBootTest`
   where possible.
+- The test source set includes a `TestServer` and example controllers
+  (`TestApiKeyController`, `TestVersionController`) for exercising the
+  framework. Run `TestServer.main()` from your IDE to manually verify changes.
+- When adding a new framework feature, add example endpoints to the test
+  controllers or create new ones under
+  `src/test/java/dev/sbs/serverapi/controller/` to demonstrate and verify the
+  feature.
 
 ## Submitting a Pull Request
 
@@ -205,7 +212,7 @@ When reporting a bug, include:
 A brief overview to help you find your way around the codebase:
 
 ```
-src/main/java/dev/sbs/serverapi/
+src/main/java/dev/sbs/serverapi/     # Framework library
 ├── config/
 │   └── ServerConfig.java              # Immutable config with Builder, MemorySize,
 │                                      # ShutdownMode, ForwardHeadersStrategy
@@ -233,6 +240,12 @@ src/main/java/dev/sbs/serverapi/
     ├── ApiVersionInterceptor.java     # Defense-in-depth version validation
     ├── VersionRegistryService.java    # Precomputed path-to-version index
     └── exception/                     # InvalidVersionException, MissingVersionException
+
+src/test/java/dev/sbs/serverapi/      # Test harness
+├── TestServer.java                    # Runnable test application (port 8080)
+└── controller/
+    ├── TestApiKeyController.java      # API key auth test endpoints (/api/*)
+    └── TestVersionController.java     # API versioning test endpoints (/v{N}/*)
 ```
 
 ### Key extension points
