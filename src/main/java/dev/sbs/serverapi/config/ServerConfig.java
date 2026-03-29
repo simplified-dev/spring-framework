@@ -137,6 +137,7 @@ public final class ServerConfig {
         props.put("server.forward-headers-strategy", this.forwardHeadersStrategy.name());
         props.put("spring.application.name", this.applicationName);
         props.put("logging.level.root", this.rootLogLevel.name());
+        props.put("spring.main.allow-bean-definition-overriding", true);
         props.put("api.key.authentication.enabled", this.apiKeyAuthEnabled);
         props.put("springdoc.api-docs.enabled", this.springdocEnabled);
         props.put("springdoc.scalar.enabled", this.springdocEnabled);
