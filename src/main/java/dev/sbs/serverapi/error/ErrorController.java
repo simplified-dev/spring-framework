@@ -9,6 +9,7 @@ import dev.sbs.serverapi.version.exception.MissingVersionException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -34,9 +35,10 @@ import java.util.regex.Pattern;
  */
 @RequiredArgsConstructor
 @RestControllerAdvice
-public class ErrorController extends ResponseEntityExceptionHandler {
+public final class ErrorController extends ResponseEntityExceptionHandler {
 
     private static final @NotNull Pattern VERSION_PREFIX = Pattern.compile("^/v(\\d+)(/.*)$");
+    private static final @NotNull String CLOUDFLARE_RAY_HEADER = "Cf-Ray";
 
     private final @NotNull VersionRegistryService versionRegistryService;
 
@@ -54,14 +56,7 @@ public class ErrorController extends ResponseEntityExceptionHandler {
         if (acceptsHtml(servletRequest)) {
             HttpHeaders htmlHeaders = new HttpHeaders(headers);
             htmlHeaders.setContentType(MediaType.TEXT_HTML);
-            String html = ErrorPageRenderer.render(
-                code,
-                HttpStatus.valueOf(code).getReasonPhrase(),
-                reason,
-                route(servletRequest),
-                servletRequest.getRemoteAddr(),
-                servletRequest.getHeader("Cf-Ray")
-            );
+            String html = html(code, HttpStatus.valueOf(code).getReasonPhrase(), reason, servletRequest);
             return new ResponseEntity<>(html, htmlHeaders, statusCode);
         }
 
@@ -75,12 +70,13 @@ public class ErrorController extends ResponseEntityExceptionHandler {
             @NotNull HttpStatusCode status,
             @NotNull WebRequest request) {
         String requestUri = ((ServletWebRequest) request).getRequest().getRequestURI();
-
         Matcher versionMatcher = VERSION_PREFIX.matcher(requestUri);
+
         if (versionMatcher.matches()) {
             int requestedVersion = Integer.parseInt(versionMatcher.group(1));
             String basePath = versionMatcher.group(2);
             ConcurrentSet<Integer> available = versionRegistryService.getVersionsForPath(basePath);
+
             if (available != null) {
                 InvalidVersionException versionEx = new InvalidVersionException(requestedVersion, basePath, available);
                 return handleExceptionInternal(versionEx, null, headers, versionEx.getStatus(), request);
@@ -116,7 +112,7 @@ public class ErrorController extends ResponseEntityExceptionHandler {
         String reason = ex.getResponse().getReason();
 
         if (acceptsHtml(request))
-            return htmlResponse(code, HttpStatus.valueOf(code).getReasonPhrase(), reason, request, ErrorPageRenderer.ErrorSource.API);
+            return htmlResponse(code, HttpStatus.valueOf(code).getReasonPhrase(), reason, request, ErrorSource.API);
 
         return ResponseEntity.status(code).body(buildErrorBody(code, reason, request));
     }
@@ -140,7 +136,7 @@ public class ErrorController extends ResponseEntityExceptionHandler {
      * @param request the current request
      * @return the error response body object
      */
-    protected @NotNull Object buildErrorBody(int statusCode, String reason, @NotNull HttpServletRequest request) {
+    private @NotNull Object buildErrorBody(int statusCode, String reason, @NotNull HttpServletRequest request) {
         return java.util.Map.of(
             "status", statusCode,
             "error", HttpStatus.valueOf(statusCode).getReasonPhrase(),
@@ -157,7 +153,7 @@ public class ErrorController extends ResponseEntityExceptionHandler {
      * @param request the current web request
      * @return the error response body object
      */
-    protected @NotNull Object buildErrorBody(@NotNull HttpStatusCode statusCode, String reason, @NotNull WebRequest request) {
+    private @NotNull @Unmodifiable Object buildErrorBody(@NotNull HttpStatusCode statusCode, String reason, @NotNull WebRequest request) {
         HttpServletRequest servletRequest = ((ServletWebRequest) request).getRequest();
         int code = statusCode.value();
         return buildErrorBody(code, reason != null ? reason : HttpStatus.valueOf(code).getReasonPhrase(), servletRequest);
@@ -171,7 +167,7 @@ public class ErrorController extends ResponseEntityExceptionHandler {
      * @param request the current request
      * @return the error response body object
      */
-    protected @NotNull Object buildErrorBody(@NotNull HttpStatus status, String reason, @NotNull HttpServletRequest request) {
+    private @NotNull Object buildErrorBody(@NotNull HttpStatus status, String reason, @NotNull HttpServletRequest request) {
         return buildErrorBody(status.value(), reason, request);
     }
 
@@ -180,17 +176,22 @@ public class ErrorController extends ResponseEntityExceptionHandler {
         return accept != null && accept.contains("text/html");
     }
 
-    private static @NotNull ResponseEntity<String> htmlResponse(int code, @NotNull String title, @NotNull String reason, @NotNull HttpServletRequest request) {
-        return ResponseEntity.status(code)
-            .contentType(MediaType.TEXT_HTML)
-            .body(ErrorPageRenderer.render(code, title, reason, route(request), request.getRemoteAddr(), request.getHeader("Cf-Ray")));
+    private static @NotNull String html(int code, @NotNull String title, @NotNull String reason, @NotNull HttpServletRequest request) {
+        return html(code, title, reason, request, code < 500 ? ErrorSource.CLIENT : ErrorSource.SERVER);
     }
 
-    private static @NotNull ResponseEntity<String> htmlResponse(int code, @NotNull String title, @NotNull String reason,
-                                                                 @NotNull HttpServletRequest request, @NotNull ErrorPageRenderer.ErrorSource source) {
+    private static @NotNull String html(int code, @NotNull String title, @NotNull String reason, @NotNull HttpServletRequest request, @NotNull ErrorSource source) {
+        return ErrorPageRenderer.render(code, title, reason, route(request), request.getRemoteAddr(), request.getHeader(CLOUDFLARE_RAY_HEADER), source);
+    }
+
+    private static @NotNull ResponseEntity<String> htmlResponse(int code, @NotNull String title, @NotNull String reason, @NotNull HttpServletRequest request) {
+        return htmlResponse(code, title, reason, request, code < 500 ? ErrorSource.CLIENT : ErrorSource.SERVER);
+    }
+
+    private static @NotNull ResponseEntity<String> htmlResponse(int code, @NotNull String title, @NotNull String reason, @NotNull HttpServletRequest request, @NotNull ErrorSource source) {
         return ResponseEntity.status(code)
             .contentType(MediaType.TEXT_HTML)
-            .body(ErrorPageRenderer.render(code, title, reason, route(request), request.getRemoteAddr(), request.getHeader("Cf-Ray"), source));
+            .body(html(code, title, reason, request, source));
     }
 
     private static @NotNull String route(@NotNull HttpServletRequest request) {

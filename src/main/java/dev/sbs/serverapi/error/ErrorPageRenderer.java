@@ -1,5 +1,7 @@
 package dev.sbs.serverapi.error;
 
+import dev.sbs.api.util.StringUtil;
+import dev.sbs.api.util.SystemUtil;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -75,34 +77,6 @@ public final class ErrorPageRenderer {
     }
 
     /**
-     * Identifies which status column shows the error indicator.
-     */
-    public enum ErrorSource {
-
-        CLIENT,
-        SERVER,
-        API
-
-    }
-
-    /**
-     * Renders an HTML error page, auto-detecting the error source from the status code.
-     *
-     * @param statusCode the HTTP status code
-     * @param title the HTTP reason phrase
-     * @param reason a human-readable error description
-     * @param route the HTTP method and request URI
-     * @param clientIp the remote client IP address
-     * @param rayId the Cf-Ray header value, or null to generate a random ID
-     * @return the rendered HTML page
-     */
-    public static @NotNull String render(int statusCode, @NotNull String title, @NotNull String reason,
-                                         @NotNull String route, @NotNull String clientIp, @Nullable String rayId) {
-        return render(statusCode, title, reason, route, clientIp, rayId,
-            statusCode < 500 ? ErrorSource.CLIENT : ErrorSource.SERVER);
-    }
-
-    /**
      * Renders an HTML error page with an explicit error source column.
      *
      * @param statusCode the HTTP status code
@@ -116,7 +90,7 @@ public final class ErrorPageRenderer {
      */
     public static @NotNull String render(int statusCode, @NotNull String title, @NotNull String reason,
                                          @NotNull String route, @NotNull String clientIp, @Nullable String rayId,
-                                         @NotNull ErrorSource source) {
+                                         @Nullable ErrorSource source) {
         Map<Placeholder, String> values = new EnumMap<>(Placeholder.class);
 
         values.put(Placeholder.PAGE_TITLE, statusCode + ": " + title);
@@ -151,18 +125,21 @@ public final class ErrorPageRenderer {
             String value = entry.getKey().isEscaped() ? HtmlUtils.htmlEscape(entry.getValue()) : entry.getValue();
             html = html.replace(entry.getKey().token(), value);
         }
+
         return html;
     }
 
     private static @NotNull String resolveRayId(@Nullable String rayId) {
-        if (rayId != null && !rayId.isBlank())
+        if (StringUtil.isNotEmpty(rayId))
             return rayId;
 
         byte[] bytes = new byte[8];
         ThreadLocalRandom.current().nextBytes(bytes);
         StringBuilder sb = new StringBuilder(16);
+
         for (byte b : bytes)
             sb.append(String.format("%02x", b));
+
         return sb.toString();
     }
 
@@ -183,7 +160,7 @@ public final class ErrorPageRenderer {
     }
 
     private static @NotNull String loadResource(@NotNull String path) {
-        try (InputStream is = ErrorPageRenderer.class.getClassLoader().getResourceAsStream(path)) {
+        try (InputStream is = SystemUtil.getResource(path)) {
             if (is == null)
                 throw new IllegalStateException("Classpath resource not found: " + path);
             return new String(is.readAllBytes(), StandardCharsets.UTF_8);
