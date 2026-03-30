@@ -113,6 +113,7 @@ public final class ErrorController extends ResponseEntityExceptionHandler {
         @NotNull HttpServletRequest request) {
         int code = HttpStatus.INTERNAL_SERVER_ERROR.value();
         String reason = ex.getResponse().getReason();
+        log.error("Decode exception on {}", route(request), ex);
 
         if (acceptsHtml(request))
             return htmlResponse(code, HttpStatus.valueOf(code).getReasonPhrase(), reason, request, ErrorSource.SERVER);
@@ -137,12 +138,13 @@ public final class ErrorController extends ResponseEntityExceptionHandler {
     public @NotNull ResponseEntity<?> handleAll(
             @NotNull Exception ex,
             @NotNull HttpServletRequest request) {
+        int code = HttpStatus.INTERNAL_SERVER_ERROR.value();
         log.error("Unhandled exception on {}", route(request), ex);
 
         if (acceptsHtml(request))
-            return htmlResponse(500, "Internal Server Error", "An unexpected error occurred", request);
+            return htmlResponse(code, "Internal Server Error", "An unexpected error occurred", request);
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(buildErrorBody(500, "An unexpected error occurred", request));
+        return ResponseEntity.status(code).body(buildErrorBody(500, "An unexpected error occurred", request));
     }
 
     /**
