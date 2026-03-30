@@ -78,12 +78,13 @@ public final class ServerConfig {
      *
      * @return a fully constructed, optimized server configuration
      */
-    public static @NotNull ServerConfig optimized() {
+    public static @NotNull Builder optimized() {
         return builder()
             .withMaxThreads(400)
             .withMinSpareThreads(50)
             .withVirtualThreadsEnabled(true)
             .withAcceptCount(200)
+            .withActuatorEnabled(true)
             .withMaxConnections(10000)
             .withConnectionTimeout(10)
             .withCompressionEnabled(true)
@@ -104,8 +105,7 @@ public final class ServerConfig {
             .withMultipartMaxRequestSize(MemorySize.megabytes(75))
             .withShutdownMode(ShutdownMode.GRACEFUL)
             .withShutdownTimeout(20)
-            .withForwardHeadersStrategy(ForwardHeadersStrategy.NATIVE)
-            .build();
+            .withForwardHeadersStrategy(ForwardHeadersStrategy.NATIVE);
     }
 
     /**
@@ -145,9 +145,9 @@ public final class ServerConfig {
         props.put("spring.main.allow-bean-definition-overriding", true);
         props.put("api.key.authentication.enabled", this.apiKeyAuthEnabled);
         props.put("springdoc.api-docs.enabled", this.springdocEnabled);
-        props.put("springdoc.scalar.enabled", this.springdocEnabled);
-        props.put("springdoc.use-root-path", this.springdocEnabled);
         props.put("springdoc.api-docs.path", "/v3/api-docs");
+        props.put("scalar.enabled", this.springdocEnabled);
+        props.put("scalar.path", "/");
 
         if (this.actuatorEnabled) {
             props.put("management.endpoints.web.exposure.include", String.join(",", this.actuatorExposedEndpoints));
