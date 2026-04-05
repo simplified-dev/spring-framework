@@ -25,6 +25,8 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.util.HtmlUtils;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -215,7 +217,7 @@ public final class ErrorController extends ResponseEntityExceptionHandler {
     }
 
     private static @NotNull String route(@NotNull HttpServletRequest request) {
-        return request.getMethod() + " " + HtmlUtils.htmlEscape(request.getRequestURI());
+        return request.getMethod() + " " + HtmlUtils.htmlEscape(URLDecoder.decode(request.getRequestURI(), StandardCharsets.UTF_8));
     }
 
 }
