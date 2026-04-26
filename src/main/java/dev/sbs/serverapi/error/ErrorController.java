@@ -1,12 +1,8 @@
 package dev.sbs.serverapi.error;
 
 import dev.sbs.serverapi.exception.ServerException;
-import dev.sbs.serverapi.version.VersionRegistryService;
-import dev.sbs.serverapi.version.exception.InvalidVersionException;
-import dev.sbs.serverapi.version.exception.MissingVersionException;
 import dev.simplified.client.exception.ApiDecodeException;
 import dev.simplified.client.exception.ApiException;
-import dev.simplified.collection.ConcurrentSet;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -22,15 +18,13 @@ import org.springframework.security.authentication.InsufficientAuthenticationExc
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.accept.InvalidApiVersionException;
+import org.springframework.web.accept.MissingApiVersionException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Global exception handler producing consistent error responses for all errors.
@@ -50,9 +44,6 @@ import java.util.regex.Pattern;
 @RestControllerAdvice
 public final class ErrorController extends ResponseEntityExceptionHandler {
 
-    private static final @NotNull Pattern VERSION_PREFIX = Pattern.compile("^/v(\\d+)(/.*)$");
-
-    private final @NotNull VersionRegistryService versionRegistryService;
     private final @NotNull ErrorResponseWriter responseWriter;
 
     @Override
@@ -81,41 +72,25 @@ public final class ErrorController extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(responseBody, responseHeaders, statusCode);
     }
 
-    @Override
-    protected @NotNull ResponseEntity<Object> handleNoResourceFoundException(
-            @NotNull NoResourceFoundException ex,
-            @NotNull HttpHeaders headers,
-            @NotNull HttpStatusCode status,
-            @NotNull WebRequest request) {
-        String requestUri = ((ServletWebRequest) request).getRequest().getRequestURI();
-        Matcher versionMatcher = VERSION_PREFIX.matcher(requestUri);
-
-        if (versionMatcher.matches()) {
-            int requestedVersion = Integer.parseInt(versionMatcher.group(1));
-            String basePath = versionMatcher.group(2);
-            ConcurrentSet<Integer> available = versionRegistryService.getVersionsForPath(basePath);
-
-            if (available != null) {
-                InvalidVersionException versionEx = new InvalidVersionException(requestedVersion, basePath, available);
-                return handleExceptionInternal(versionEx, null, headers, versionEx.getStatus(), request);
-            }
-        }
-
-        ConcurrentSet<Integer> available = versionRegistryService.getVersionsForPath(requestUri);
-        if (available != null && !available.isEmpty()) {
-            MissingVersionException versionEx = new MissingVersionException(requestUri, available);
-            return handleExceptionInternal(versionEx, null, headers, versionEx.getStatus(), request);
-        }
-
-        return handleExceptionInternal(ex, null, headers, status, request);
-    }
-
     @ExceptionHandler(ServerException.class)
     public @NotNull ResponseEntity<?> handleServerException(
             @NotNull ServerException ex,
             @NotNull HttpServletRequest request) {
         HttpStatus status = ex.getStatus();
         return this.responseWriter.entity(request, status.value(), ex.getMessage());
+    }
+
+    /**
+     * Handles {@link MissingApiVersionException} and {@link InvalidApiVersionException}
+     * thrown by Spring Framework's API versioning machinery when a request lacks a
+     * required version or specifies one that is not supported.
+     */
+    @ExceptionHandler({ MissingApiVersionException.class, InvalidApiVersionException.class })
+    public @NotNull ResponseEntity<?> handleApiVersion(
+            @NotNull Exception ex,
+            @NotNull HttpServletRequest request) {
+        String message = ex.getMessage() != null ? ex.getMessage() : "API version error";
+        return this.responseWriter.entity(request, HttpStatus.BAD_REQUEST.value(), message);
     }
 
     /**

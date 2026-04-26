@@ -37,6 +37,7 @@ dependencies {
     testRuntimeOnly(libs.junit.jupiter.engine)
     testImplementation(libs.junit.platform.launcher)
     testImplementation(libs.spring.boot.test)
+    testRuntimeOnly(libs.spring.boot.properties.migrator)
 
     // Exported dependencies (available to consumers)
     api("com.github.simplified-dev:gson-extras:master-SNAPSHOT")

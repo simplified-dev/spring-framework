@@ -1,10 +1,10 @@
 [versions]
-lombok = "1.18.36"
+lombok = "1.18.46"
 simplified-annotations = "1.0.4"
 junit-jupiter = "5.11.4"
 hamcrest = "2.2"
-spring-boot = "3.4.5"
-springdoc-openapi = "2.8.16"
+spring-boot = "4.0.5"
+springdoc-openapi = "3.0.3"
 gson = "2.11.0"
 bucket4j = "8.10.1"
 
@@ -19,7 +19,8 @@ gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 spring-boot-actuator = { group = "org.springframework.boot", name = "spring-boot-starter-actuator", version.ref = "spring-boot" }
 spring-boot-web = { group = "org.springframework.boot", name = "spring-boot-starter-web", version.ref = "spring-boot" }
 spring-boot-security = { group = "org.springframework.boot", name = "spring-boot-starter-security", version.ref = "spring-boot" }
-spring-boot-test = { group = "org.springframework.boot", name = "spring-boot-starter-test", version.ref = "spring-boot" }
+spring-boot-test = { group = "org.springframework.boot", name = "spring-boot-starter-webmvc-test", version.ref = "spring-boot" }
+spring-boot-properties-migrator = { group = "org.springframework.boot", name = "spring-boot-properties-migrator", version.ref = "spring-boot" }
 bucket4j-core = { group = "com.bucket4j", name = "bucket4j-core", version.ref = "bucket4j" }
 springdoc-openapi-common = { group = "org.springdoc", name = "springdoc-openapi-starter-common", version.ref = "springdoc-openapi" }
 springdoc-openapi-scalar = { group = "org.springdoc", name = "springdoc-openapi-starter-webmvc-scalar", version.ref = "springdoc-openapi" }

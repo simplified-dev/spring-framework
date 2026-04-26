@@ -8,7 +8,7 @@ import dev.simplified.collection.Concurrent;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -81,13 +81,6 @@ class ServerApiTest {
             .andExpect(status().isNotFound());
     }
 
-    @Test
-    void barePathFallsBackToV1() throws Exception {
-        mockMvc.perform(get("/hello"))
-            .andExpect(status().isOk())
-            .andExpect(content().string("Hello from API v1!"));
-    }
-
     // --- API Key Authentication ---
 
     @Test
@@ -99,19 +92,19 @@ class ServerApiTest {
 
     @Test
     void protectedEndpoint_withoutKey_returnsUnauthorized() throws Exception {
-        mockMvc.perform(get("/api/basic").accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/api/basic"))
             .andExpect(status().isUnauthorized());
     }
 
     @Test
     void protectedEndpoint_withInvalidKey_returnsUnauthorized() throws Exception {
-        mockMvc.perform(get("/api/basic").header("X-API-Key", "bad-key").accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/api/basic").header("X-API-Key", "bad-key"))
             .andExpect(status().isUnauthorized());
     }
 
     @Test
     void protectedEndpoint_withInsufficientRole_returnsForbidden() throws Exception {
-        mockMvc.perform(get("/api/admin-panel").header("X-API-Key", "service-key-123").accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/api/admin-panel").header("X-API-Key", "service-key-123"))
             .andExpect(status().isForbidden());
     }
 

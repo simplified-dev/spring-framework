@@ -14,20 +14,21 @@ See the root [`CLAUDE.md`](../CLAUDE.md) for cross-cutting patterns.
 
 ## Module Overview
 
-`server-api` is a reusable Spring Boot server framework library. It provides API versioning, Spring Security-backed API key authentication, rate limiting (Bucket4j), error handling, and server configuration as a `java-library` that other Spring Boot applications consume. Follows the same pattern as `discord-api` (framework) vs `simplified-bot` (implementation).
+`server-api` is a reusable Spring Boot server framework library on **Spring Boot 4.0 / Spring Framework 7.0 / Spring Security 7.0**. It provides Spring 7's native API versioning, Spring Security-backed API key authentication, rate limiting (Bucket4j), error handling, and server configuration as a `java-library` that other Spring Boot applications consume. Follows the same pattern as `discord-api` (framework) vs `simplified-bot` (implementation).
 
 ### Package: `dev.sbs.serverapi`
 
-**Exports:** Spring Boot starters (`web`, `actuator`, `security`), `bucket4j-core`, `gson`, and the `simplified-dev` `client` and `gson-extras` libraries via `api()` dependencies. Consumers get all of these transitively, including `@PreAuthorize`, `Authentication`, and the Bucket4j `Bucket` API.
+**Exports:** Spring Boot starters (`web`, `actuator`, `security`), `bucket4j-core`, `gson`, and the `simplified-dev` `client` and `gson-extras` libraries via `api()` dependencies. Consumers get all of these transitively, including `@PreAuthorize`, `Authentication`, the `@RequestMapping(version=...)` attribute, and the Bucket4j `Bucket` API.
 
 ### Package Structure
 
 **`config/`** - Server-wide configuration:
 - `ServerConfig` - Immutable configuration class following the `ClassBuilder` pattern. Inner `Builder` with `@BuildFlag` validation. Static factories: `builder()` for full control, `optimized()` for a production-tuned preset. `toProperties()` converts fields to a `ConcurrentMap<String, Object>` for `SpringApplication.setDefaultProperties()`. Includes `springdocEnabled` toggle controlling SpringDoc/Scalar properties.
 - `ServerWebConfig` - Framework-level `WebMvcConfigurer` providing the `GsonHttpMessageConverter` (placed ahead of Jackson), the no-op `ErrorController` bean that displaces Spring Boot's `BasicErrorController`, and the shared `ErrorResponseWriter` bean. Uses a consumer-provided `Gson` `@Bean` if available, otherwise falls back to a default `Gson` created from `GsonSettings.defaults()`. Security response headers are set by Spring Security's `HeadersConfigurer` in `ApiKeySecurityConfig` rather than here.
+- `ApiVersionWebConfig` - `WebMvcConfigurer` wiring Spring 7's path-segment API versioning. Uses `usePathSegment(0, predicate)` with a regex predicate so only `/v<digits>/...` URLs are treated as versioned; non-matching paths (`/default`, `/api/...`) bypass version extraction. The default `SemanticApiVersionParser` strips the `v` prefix and parses semver, so handlers declare `@RequestMapping(version = "1")` and the runtime matches `GET /v1/foo` correctly.
 
 **`error/`** - Global error handling and HTML error page rendering:
-- `ErrorController` - Global `@RestControllerAdvice` extending `ResponseEntityExceptionHandler`. Delegates content-negotiated rendering to `ErrorResponseWriter`. Includes explicit handlers for `AccessDeniedException` and `AuthenticationException` thrown by `@PreAuthorize` from inside controllers (these unwind to dispatcher servlet exception handling before Spring Security's `ExceptionTranslationFilter` sees them, so we route them to the same writer used by the entry point and access-denied handler). Mirrors the filter's "anonymous becomes 401" behavior. Overrides `handleNoResourceFoundException` to detect version violations on 404s.
+- `ErrorController` - Global `@RestControllerAdvice` extending `ResponseEntityExceptionHandler`. Delegates content-negotiated rendering to `ErrorResponseWriter`. Includes explicit handlers for `AccessDeniedException` and `AuthenticationException` thrown by `@PreAuthorize` from inside controllers (these unwind to dispatcher servlet exception handling before Spring Security's `ExceptionTranslationFilter` sees them, so we route them to the same writer used by the entry point and access-denied handler). Mirrors the filter's "anonymous becomes 401" behavior. Also handles `MissingApiVersionException` and `InvalidApiVersionException` thrown by Spring 7's versioning machinery, mapping them to 400.
 - `ErrorResponseWriter` - Shared utility for content-negotiated error responses (HTML vs JSON). Used by `ErrorController` (returns `ResponseEntity`) and by Spring Security's `AuthenticationEntryPoint` / `AccessDeniedHandler` (writes directly to the response). Holds the `Gson` instance for JSON serialization.
 - `ErrorPageRenderer` - Non-instantiable utility class rendering Cloudflare-style HTML error pages. Contains `Placeholder` enum for named `{{TOKEN}}` substitution with XSS escaping, and `ErrorSource` enum (`CLIENT`, `SERVER`, `API`).
 
@@ -49,14 +50,7 @@ See the root [`CLAUDE.md`](../CLAUDE.md) for cross-cutting patterns.
 - `PermitAllSecurityConfig` - Fallback `@EnableWebSecurity` config active when `api.key.authentication.enabled` is missing or `false`. Permits all requests so Spring Boot's default `SecurityAutoConfiguration` does not install a basic-auth chain with a generated password (which is rarely desired).
 - `security/openapi/` - SpringDoc customizers (`ApiKeyOpenApiConfig`, `ApiKeySecurityCustomizer`, `ApiKeyOperationCustomizer`). The operation customizer scans `@PreAuthorize` annotations and infers the qualifying `ApiKeyRole` set from `hasRole`/`hasAnyRole`/`hasAuthority` expressions for documentation purposes.
 
-**`version/`** - URL-path-based API versioning (`/v1/endpoint`, `/v2/endpoint`):
-- `ApiVersion` - TYPE and METHOD level annotation specifying supported version numbers.
-- `ApiVersionCondition` - Custom `RequestCondition` for combine/compare.
-- `ApiVersionHandlerMapping` - Custom `RequestMappingHandlerMapping` that prepends `/v{N}` path prefixes.
-- `ApiVersionInterceptor` - Defense-in-depth version validation on resolved handlers.
-- `VersionRegistryService` - Precomputed index mapping base paths to available version numbers.
-- `ApiVersionConfig` - Bean registration for versioning components.
-- `version/exception/` - `VersionException` base and two leaf exceptions with internalized format strings.
+**API versioning** is provided by Spring Framework 7 directly. There is no `version/` package - declare the version on each handler with `@RequestMapping(version = "1")` (or `@GetMapping(path = ..., version = "1")`) and the framework routes accordingly. Configuration lives in `config/ApiVersionWebConfig`.
 
 **`src/main/resources/error/`** - HTML error page resources:
 - `error-page.css` - Minified CSS from [donlon/cloudflare-error-page](https://github.com/donlon/cloudflare-error-page) (MIT license).
@@ -68,7 +62,7 @@ See the root [`CLAUDE.md`](../CLAUDE.md) for cross-cutting patterns.
 
 **`controller/`** - Test controllers exercising framework features:
 - `TestApiKeyController` - Endpoints under `/api/` demonstrating `@PreAuthorize` with role requirements (`ADMIN`, `DEVELOPER`, `USER`) resolved through the `ApiKeyRole` hierarchy.
-- `TestVersionController` - Endpoints demonstrating `@ApiVersion` with multiple versions (`/v1/hello`, `/v2/hello`, `/v3/hello`, `/v1/data`, `/v2/data`) and an unversioned `/default` endpoint.
+- `TestVersionController` - Endpoints demonstrating Spring 7's `@RequestMapping(version=...)` with multiple versions (`/v1/hello`, `/v2/hello`, `/v3/hello`, `/v1/data`, `/v2/data`) and an unversioned `/default` endpoint. Each handler explicitly declares its `/v{N}/` path so it works with `usePathSegment(0, predicate)` configuration; the `version` attribute supplies metadata for OpenAPI rendering and Spring's deprecation/sunset header support.
 
 ### Consumer Usage
 
