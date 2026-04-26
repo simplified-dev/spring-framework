@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -28,37 +29,31 @@ public class ApiKeyService {
     }
 
     /**
-     * Checks whether the given key string corresponds to a registered API key.
+     * Resolves the {@link ApiKey} registered under the given key string.
      *
-     * @param apiKey the key string to validate
-     * @return {@code true} if the key is registered
+     * <p>This is the only point in the request path that touches the {@link ApiKeyStore}.
+     * Callers should retain the returned instance and pass it to subsequent rate-limit and
+     * permission checks rather than re-resolving, so that sliding-window counter state on
+     * the {@link ApiKey} is mutated consistently and JPA-backed stores incur a single hit
+     * per request.</p>
+     *
+     * @param apiKey the key string to look up
+     * @return the matching {@link ApiKey}, or empty if the key is unregistered
      */
-    public boolean isValidApiKey(@NotNull String apiKey) {
-        return store.findByKey(apiKey).isPresent();
+    public @NotNull Optional<ApiKey> resolve(@NotNull String apiKey) {
+        return store.findByKey(apiKey);
     }
 
     /**
-     * Checks whether the given API key has exceeded its rate limit.
-     *
-     * @param apiKey the key string to check
-     * @return {@code true} if the key is rate-limited and the request should be rejected
-     */
-    public boolean isRateLimited(@NotNull String apiKey) {
-        return store.findByKey(apiKey).map(key -> !key.allowRequest()).orElse(false);
-    }
-
-    /**
-     * Checks whether the given API key holds at least one of the required roles,
+     * Checks whether the given {@link ApiKey} holds at least one of the required roles,
      * accounting for role hierarchy expansion.
      *
-     * @param apiKey the key string to check
+     * @param key the resolved API key
      * @param requiredPermissions the roles required (any-match semantics)
-     * @return {@code true} if the key holds at least one of the required roles
+     * @return {@code true} if {@code requiredPermissions} is empty or the key holds at
+     *         least one of the required roles
      */
-    public boolean hasPermission(@NotNull String apiKey, @NotNull ApiKeyRole[] requiredPermissions) {
-        ApiKey key = store.findByKey(apiKey).orElse(null);
-        if (key == null) return false;
-
+    public boolean hasPermission(@NotNull ApiKey key, @NotNull ApiKeyRole[] requiredPermissions) {
         if (requiredPermissions.length == 0)
             return true;
 

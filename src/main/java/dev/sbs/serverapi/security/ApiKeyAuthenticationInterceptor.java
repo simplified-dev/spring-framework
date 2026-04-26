@@ -44,17 +44,14 @@ public class ApiKeyAuthenticationInterceptor implements HandlerInterceptor {
             if (apiKey == null || apiKey.isEmpty())
                 throw new MissingApiKeyException();
 
-            if (!apiKeyService.isValidApiKey(apiKey))
-                throw new InvalidApiKeyException();
+            ApiKey key = this.apiKeyService.resolve(apiKey).orElseThrow(InvalidApiKeyException::new);
 
-            if (apiKeyService.isRateLimited(apiKey))
+            if (!key.allowRequest())
                 throw new RateLimitExceededException();
 
             ApiKeyRole[] required = apiKeyProtected.requiredPermissions();
-            if (required.length > 0) {
-                if (!apiKeyService.hasPermission(apiKey, required))
-                    throw new InsufficientPermissionException();
-            }
+            if (required.length > 0 && !this.apiKeyService.hasPermission(key, required))
+                throw new InsufficientPermissionException();
 
             return true;
         }
