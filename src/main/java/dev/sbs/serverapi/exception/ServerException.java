@@ -1,6 +1,5 @@
 package dev.sbs.serverapi.exception;
 
-import dev.sbs.serverapi.ratelimit.exception.RateLimitExceededException;
 import dev.sbs.serverapi.version.exception.VersionException;
 import lombok.Getter;
 import org.intellij.lang.annotations.PrintFormat;
@@ -11,7 +10,6 @@ import org.springframework.http.HttpStatus;
 /**
  * Thrown when a server-side constraint produces an HTTP error response.
  *
- * @see RateLimitExceededException
  * @see VersionException
  */
 @Getter

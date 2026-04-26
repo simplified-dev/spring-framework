@@ -9,7 +9,7 @@ import java.util.Optional;
  *
  * <p>Implementations are free to return fresh {@code ApiKey} instances on each lookup.
  * Rate-limit state is held externally in
- * {@link dev.sbs.serverapi.ratelimit.RateLimitFilter} keyed by
+ * {@link ApiKeyRateLimitFilter} keyed by
  * {@link ApiKey#getKeyValue()}, so instance identity does not affect counter
  * continuity.</p>
  */

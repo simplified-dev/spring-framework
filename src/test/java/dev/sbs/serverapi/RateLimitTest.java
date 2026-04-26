@@ -1,7 +1,7 @@
 package dev.sbs.serverapi;
 
-import dev.sbs.serverapi.ratelimit.RateLimitFilter;
 import dev.sbs.serverapi.security.ApiKey;
+import dev.sbs.serverapi.security.ApiKeyRateLimitFilter;
 import dev.sbs.serverapi.security.ApiKeyRole;
 import dev.sbs.serverapi.security.ApiKeyStore;
 import dev.sbs.serverapi.security.InMemoryApiKeyStore;
@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Integration tests for {@link RateLimitFilter} with a Bucket4j-backed bucket per
+ * Integration tests for {@link ApiKeyRateLimitFilter} with a Bucket4j-backed bucket per
  * {@link ApiKey}.
  *
  * <p>Tests assume {@code api.key.authentication.enabled=true} (the default in
@@ -68,11 +68,11 @@ class RateLimitTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectProvider<RateLimitFilter> rateLimitFilterProvider;
+    private ObjectProvider<ApiKeyRateLimitFilter> rateLimitFilterProvider;
 
     /**
      * Skip every test in this class when API key authentication is disabled - the
-     * {@link RateLimitFilter} bean is conditional on the same property, so without it
+     * {@link ApiKeyRateLimitFilter} bean is conditional on the same property, so without it
      * there is nothing to assert against.
      */
     @BeforeEach
@@ -81,7 +81,7 @@ class RateLimitTest {
             "api.key.authentication.enabled is false - skipping rate-limit tests");
 
         // Reset state so each test starts with a fresh bucket per key.
-        RateLimitFilter filter = this.rateLimitFilterProvider.getIfAvailable();
+        ApiKeyRateLimitFilter filter = this.rateLimitFilterProvider.getIfAvailable();
         if (filter != null) {
             filter.clearBucket("rate-key-A");
             filter.clearBucket("rate-key-B");

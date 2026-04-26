@@ -1,7 +1,6 @@
 package dev.sbs.serverapi.security;
 
 import dev.sbs.serverapi.error.ErrorResponseWriter;
-import dev.sbs.serverapi.ratelimit.RateLimitFilter;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -34,7 +33,7 @@ import org.springframework.security.web.header.writers.XXssProtectionHeaderWrite
  *   <li><b>{@link SecurityFilterChain}</b> - stateless, CSRF disabled (REST). Inserts
  *       {@link ApiKeyAuthenticationFilter} before
  *       {@link UsernamePasswordAuthenticationFilter} and
- *       {@link RateLimitFilter} immediately after. Authorization is delegated to
+ *       {@link ApiKeyRateLimitFilter} immediately after. Authorization is delegated to
  *       {@code @PreAuthorize}; the chain itself permits all requests.</li>
  *   <li><b>{@link RoleHierarchy}</b> - built from {@link ApiKeyRole} declaration order so
  *       earlier constants inherit later constants' authorities.</li>
@@ -107,8 +106,8 @@ public class ApiKeySecurityConfig {
     }
 
     @Bean
-    public @NotNull RateLimitFilter rateLimitFilter(@NotNull ErrorResponseWriter responseWriter) {
-        return new RateLimitFilter(responseWriter);
+    public @NotNull ApiKeyRateLimitFilter rateLimitFilter(@NotNull ErrorResponseWriter responseWriter) {
+        return new ApiKeyRateLimitFilter(responseWriter);
     }
 
     @Bean
@@ -117,7 +116,7 @@ public class ApiKeySecurityConfig {
         @NotNull AuthenticationManager authenticationManager,
         @NotNull ApiKeyAuthenticationEntryPoint entryPoint,
         @NotNull ApiKeyAccessDeniedHandler accessDeniedHandler,
-        @NotNull RateLimitFilter rateLimitFilter) throws Exception {
+        @NotNull ApiKeyRateLimitFilter rateLimitFilter) throws Exception {
 
         ApiKeyAuthenticationFilter authFilter = new ApiKeyAuthenticationFilter(authenticationManager, entryPoint);
 

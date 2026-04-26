@@ -1,8 +1,6 @@
-package dev.sbs.serverapi.ratelimit;
+package dev.sbs.serverapi.security;
 
 import dev.sbs.serverapi.error.ErrorResponseWriter;
-import dev.sbs.serverapi.ratelimit.exception.RateLimitExceededException;
-import dev.sbs.serverapi.security.ApiKey;
 import io.github.bucket4j.Bucket;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -28,15 +26,15 @@ import java.util.concurrent.ConcurrentMap;
  * whether they are allowed. For authenticated requests, a {@link Bucket} keyed by
  * {@link ApiKey#getKeyValue()} is consulted; one token is consumed per request. On overflow,
  * a 429 response is written directly via {@link ErrorResponseWriter} - the filter chain runs
- * outside the {@link org.springframework.web.bind.annotation.ControllerAdvice} flow, so we
- * cannot rely on {@link RateLimitExceededException} reaching the
- * {@link dev.sbs.serverapi.error.ErrorController @RestControllerAdvice}.</p>
+ * outside the {@link org.springframework.web.bind.annotation.ControllerAdvice} flow, so an
+ * exception thrown here would land on Spring Boot's default error path rather than the
+ * framework's content-negotiated renderer.</p>
  *
  * <p>Buckets are created lazily on first use, using {@link ApiKey#getMaxRequests()} as
  * capacity and {@link ApiKey#getWindowInSeconds()} as the greedy-refill interval.</p>
  */
 @RequiredArgsConstructor
-public class RateLimitFilter extends OncePerRequestFilter {
+public class ApiKeyRateLimitFilter extends OncePerRequestFilter {
 
     private final @NotNull ErrorResponseWriter responseWriter;
     private final @NotNull ConcurrentMap<String, Bucket> buckets = new ConcurrentHashMap<>();

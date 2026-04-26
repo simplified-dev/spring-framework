@@ -15,7 +15,7 @@ import java.util.Collection;
  * <p>Carried as the principal of an authenticated
  * {@link org.springframework.security.core.Authentication}. Rate-limit configuration
  * ({@link #getMaxRequests()}, {@link #getWindowInSeconds()}) is consumed by
- * {@link dev.sbs.serverapi.ratelimit.RateLimitFilter}.</p>
+ * {@link ApiKeyRateLimitFilter}.</p>
  */
 @Getter
 @RequiredArgsConstructor
