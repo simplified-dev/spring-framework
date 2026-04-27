@@ -1,1 +1,1 @@
-rootProject.name = "server-api"
+rootProject.name = "spring-framework"
