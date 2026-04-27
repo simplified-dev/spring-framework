@@ -9,7 +9,6 @@ import org.springframework.boot.webmvc.error.ErrorController;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.ByteArrayHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.GsonHttpMessageConverter;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -20,16 +19,25 @@ import java.util.List;
  * Framework-level web configuration providing HTTP message converters and the shared
  * {@link ErrorResponseWriter} for the Gson-based ecosystem.
  *
- * <p>The {@link GsonHttpMessageConverter} is exposed as a {@code @Bean} so that Spring
- * Boot's {@code HttpMessageConverters} places it ahead of the default Jackson converter.
- * This ensures Gson - which carries the project's custom {@code TypeAdapter} registrations -
- * always wins content negotiation for {@code application/json}.</p>
+ * <p>Replaces Spring Boot's default Jackson JSON converter with a {@link GsonHttpMessageConverter}
+ * at the same position in the chain, leaving the framework's default
+ * {@code ByteArrayHttpMessageConverter}, {@code StringHttpMessageConverter}, and
+ * {@code ResourceHttpMessageConverter} at their original positions. So:</p>
+ * <ul>
+ *   <li>Controllers returning plain {@link String} go through {@code StringHttpMessageConverter} -
+ *       no Gson quote-wrapping, no need for {@code produces = MediaType.TEXT_PLAIN_VALUE}.</li>
+ *   <li>Endpoints returning {@code byte[]} (e.g. SpringDoc's {@code /v3/api-docs}) go through
+ *       {@code ByteArrayHttpMessageConverter} - the bytes are written verbatim instead of
+ *       Gson serializing each byte as a JSON int.</li>
+ *   <li>Real DTOs and {@link java.util.Map}s go through Gson with the project's custom
+ *       {@code TypeAdapter} registrations.</li>
+ * </ul>
  *
  * <p>If a consumer defines a {@link Gson} {@code @Bean}, it is used automatically.
  * Otherwise a default Gson instance created from {@link GsonSettings#defaults()} is used
  * as a fallback.</p>
  *
- * <p>Security response headers are no longer set here - Spring Security's
+ * <p>Security response headers are not set here - Spring Security's
  * {@code HeadersConfigurer} handles {@code X-Content-Type-Options}, HSTS,
  * {@code X-Frame-Options}, and {@code Referrer-Policy} via
  * {@link dev.sbs.serverapi.security.ApiKeySecurityConfig}.</p>
@@ -57,41 +65,6 @@ public class ServerWebConfig implements WebMvcConfigurer {
     }
 
     /**
-     * Exposes a Gson-backed message converter as a bean so Spring Boot registers it
-     * before the default Jackson converter in the converter chain.
-     *
-     * @return the Gson HTTP message converter
-     */
-    @Bean
-    public @NotNull GsonHttpMessageConverter gsonHttpMessageConverter() {
-        GsonHttpMessageConverter converter = new GsonHttpMessageConverter();
-        converter.setGson(this.gson);
-        return converter;
-    }
-
-    /**
-     * Inserts a {@link ByteArrayHttpMessageConverter} that claims {@code application/json}
-     * at position 0 of the chain so SpringDoc's raw {@code byte[]} OpenAPI document is
-     * written verbatim instead of being JSON-serialized as an integer array by Gson.
-     *
-     * <p>Without this override, {@code GET /v3/api-docs} returns
-     * {@code [123,34,111,...]} (Gson serializing each byte as an int), which Scalar/Swagger
-     * UI can't parse as an OpenAPI document.</p>
-     *
-     * @param converters the message converter chain to extend
-     */
-    @Override
-    public void extendMessageConverters(@NotNull List<HttpMessageConverter<?>> converters) {
-        ByteArrayHttpMessageConverter byteArrayConverter = new ByteArrayHttpMessageConverter();
-        byteArrayConverter.setSupportedMediaTypes(List.of(
-            MediaType.APPLICATION_JSON,
-            MediaType.APPLICATION_OCTET_STREAM,
-            MediaType.ALL
-        ));
-        converters.add(0, byteArrayConverter);
-    }
-
-    /**
      * Shared response writer used by {@link dev.sbs.serverapi.error.ErrorController} and
      * the Spring Security entry-point and access-denied handlers to render content-negotiated
      * error responses.
@@ -101,6 +74,48 @@ public class ServerWebConfig implements WebMvcConfigurer {
     @Bean
     public @NotNull ErrorResponseWriter errorResponseWriter() {
         return new ErrorResponseWriter(this.gson);
+    }
+
+    /**
+     * Replaces Spring Boot's default Jackson JSON converter with a Gson converter at the
+     * same position in the chain. The default {@code String} / {@code byte[]} /
+     * {@code Resource} converters keep their precedence over Gson, so non-DTO responses
+     * are written verbatim.
+     *
+     * @param converters the auto-configured converter chain
+     */
+    @Override
+    public void extendMessageConverters(@NotNull List<HttpMessageConverter<?>> converters) {
+        int insertAt = converters.size();
+
+        for (int i = converters.size() - 1; i >= 0; i--) {
+            if (isJacksonJsonConverter(converters.get(i))) {
+                insertAt = i;
+                converters.remove(i);
+            }
+        }
+
+        GsonHttpMessageConverter gsonConverter = new GsonHttpMessageConverter();
+        gsonConverter.setGson(this.gson);
+        converters.add(insertAt, gsonConverter);
+    }
+
+    /**
+     * A converter is the Jackson JSON converter (in either Boot 4's Jackson 3 form or the
+     * legacy Jackson 2 form) when its class name contains {@code Jackson} and its
+     * supported media types include {@code application/json}. Other Jackson converters
+     * (XML, CBOR, Smile, YAML) are left in place.
+     */
+    private static boolean isJacksonJsonConverter(@NotNull HttpMessageConverter<?> converter) {
+        if (!converter.getClass().getName().contains("Jackson"))
+            return false;
+
+        for (MediaType mediaType : converter.getSupportedMediaTypes()) {
+            if (MediaType.APPLICATION_JSON.includes(mediaType))
+                return true;
+        }
+
+        return false;
     }
 
 }

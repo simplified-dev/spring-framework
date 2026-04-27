@@ -1,7 +1,6 @@
 package dev.sbs.serverapi.controller;
 
 import org.jetbrains.annotations.NotNull;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,27 +19,27 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class TestVersionController {
 
-    @GetMapping(path = "/hello", version = "1", produces = MediaType.TEXT_PLAIN_VALUE)
+    @GetMapping(path = "/hello", version = "1")
     public @NotNull ResponseEntity<String> getHelloV1() {
         return ResponseEntity.ok("Hello from API v1!");
     }
 
-    @GetMapping(path = "/hello", version = "2", produces = MediaType.TEXT_PLAIN_VALUE)
+    @GetMapping(path = "/hello", version = "2")
     public @NotNull ResponseEntity<String> getHelloV2() {
         return ResponseEntity.ok("Hello from API v2!");
     }
 
-    @GetMapping(path = "/hello", version = "3", produces = MediaType.TEXT_PLAIN_VALUE)
+    @GetMapping(path = "/hello", version = "3")
     public @NotNull ResponseEntity<String> getHelloV3() {
         return ResponseEntity.ok("Hello from API v3!");
     }
 
-    @GetMapping(path = "/data", version = "1", produces = MediaType.TEXT_PLAIN_VALUE)
+    @GetMapping(path = "/data", version = "1")
     public @NotNull ResponseEntity<String> getDataV1() {
         return ResponseEntity.ok("Data for API v1: { id: 1, name: 'Item One' }");
     }
 
-    @GetMapping(path = "/data", version = "2", produces = MediaType.TEXT_PLAIN_VALUE)
+    @GetMapping(path = "/data", version = "2")
     public @NotNull ResponseEntity<String> getDataV2() {
         return ResponseEntity.ok("Data for API v2: { itemId: 1, itemName: 'Item One Updated' }");
     }

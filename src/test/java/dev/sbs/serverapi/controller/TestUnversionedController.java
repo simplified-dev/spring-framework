@@ -1,7 +1,6 @@
 package dev.sbs.serverapi.controller;
 
 import org.jetbrains.annotations.NotNull;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class TestUnversionedController {
 
-    @GetMapping(path = "/default", produces = MediaType.TEXT_PLAIN_VALUE)
+    @GetMapping("/default")
     public @NotNull ResponseEntity<String> getDefaultHello() {
         return ResponseEntity.ok("Hello from default (unversioned) endpoint!");
     }
