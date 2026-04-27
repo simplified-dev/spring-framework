@@ -27,11 +27,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Integration tests for {@link ApiKeyRateLimitFilter} with a Bucket4j-backed bucket per
  * {@link ApiKey}.
  *
- * <p>Tests assume {@code api.key.authentication.enabled=true} (the default in
- * {@code src/test/resources/application.properties}). When the property is overridden
- * to {@code false} - for example, by a developer running the suite without an
- * {@link ApiKeyStore} configured - every test in this class self-skips via
- * {@link Assumptions#assumeTrue}, so the suite still passes without rate-limit assertions.</p>
+ * <p>Tests assume {@code api.key.authentication.enabled=true} (the default the Gradle
+ * test task forwards via {@code systemProperty(...)} in {@code build.gradle.kts}). When
+ * the property is overridden to {@code false} - for example, by running the suite with
+ * {@code -Dapi.key.authentication.enabled=false} - every test in this class self-skips
+ * via {@link Assumptions#assumeTrue}, so the suite still passes without rate-limit
+ * assertions.</p>
  */
 @SpringBootTest(classes = TestServer.class)
 @AutoConfigureMockMvc

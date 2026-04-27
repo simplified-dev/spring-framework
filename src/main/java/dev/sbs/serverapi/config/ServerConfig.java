@@ -124,7 +124,7 @@ public final class ServerConfig {
         props.put("spring.threads.virtual.enabled", this.virtualThreadsEnabled);
         props.put("server.tomcat.accept-count", this.acceptCount);
         props.put("server.tomcat.max-connections", this.maxConnections);
-        props.put("server.connection-timeout", this.connectionTimeout + "s");
+        props.put("server.tomcat.connection-timeout", this.connectionTimeout + "s");
         props.put("server.tomcat.keep-alive-timeout", this.keepAliveTimeout + "s");
         props.put("server.tomcat.max-keep-alive-requests", this.maxKeepAliveRequests);
         props.put("server.compression.enabled", this.compressionEnabled);
