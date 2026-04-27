@@ -76,9 +76,9 @@ class ServerApiTest {
     }
 
     @Test
-    void invalidVersion_returnsNotFound() throws Exception {
-        mockMvc.perform(get("/v99/hello").accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isNotFound());
+    void invalidVersion_returnsClientError() throws Exception {
+        mockMvc.perform(get("/v99/hello"))
+            .andExpect(status().is4xxClientError());
     }
 
     // --- API Key Authentication ---

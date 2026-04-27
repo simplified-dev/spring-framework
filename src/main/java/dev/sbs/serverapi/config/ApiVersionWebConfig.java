@@ -2,24 +2,44 @@ package dev.sbs.serverapi.config;
 
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.http.server.RequestPath;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.config.annotation.ApiVersionConfigurer;
+import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import java.util.function.Predicate;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
- * Wires Spring Framework 7's path-segment API versioning, gated by a predicate so the
- * resolver only treats the first path segment as a version when it matches the
- * {@code v<digits>} convention. Non-matching paths (like {@code /default} or
- * {@code /api/admin-panel}) bypass version extraction entirely and route through the
- * configured default version.
+ * Wires Spring Framework 7's path-segment API versioning.
+ *
+ * <p>Two predicates carry the configuration:</p>
+ * <ul>
+ *   <li>The {@link PathMatchConfigurer#addPathPrefix} predicate inspects each controller
+ *       class at handler-mapping registration and applies a {@code /{version}} prefix to
+ *       any controller whose methods declare a non-empty {@code version} attribute. So
+ *       {@code @GetMapping(path = "/hello", version = "1")} on a {@code @RestController}
+ *       is reachable at {@code /v1/hello} without the path declaration repeating
+ *       {@code /v1/}.</li>
+ *   <li>The {@link ApiVersionConfigurer#usePathSegment(int, java.util.function.Predicate)}
+ *       predicate gates version extraction to URLs that actually start with a
+ *       {@code /v<digits>/} segment. Without this, the resolver would try to parse the
+ *       first segment of every URL (e.g. {@code "api"} from {@code /api/admin-panel}) and
+ *       reject the request with 400.</li>
+ * </ul>
  *
  * <p>Spring's default {@link org.springframework.web.accept.SemanticApiVersionParser}
  * strips the {@code v} prefix and parses the remainder as semver, so handlers declare
- * {@code @RequestMapping(version = "1")} and the runtime matches {@code GET /v1/hello}
- * correctly.</p>
+ * {@code version = "1"} and {@code GET /v1/foo} routes correctly.</p>
+ *
+ * <p><b>Constraint:</b> {@link PathMatchConfigurer#addPathPrefix} is class-level - every
+ * method on a versioned controller gets the prefix, versioned or not. Don't mix
+ * version-bearing methods and unversioned methods in the same controller; put unversioned
+ * endpoints in their own class.</p>
  */
 @Configuration
 public class ApiVersionWebConfig implements WebMvcConfigurer {
@@ -28,13 +48,30 @@ public class ApiVersionWebConfig implements WebMvcConfigurer {
 
     @Override
     public void configureApiVersioning(@NotNull ApiVersionConfigurer configurer) {
-        Predicate<RequestPath> versionPathPredicate = path ->
-            V_PREFIXED.matcher(path.value()).matches();
-
         configurer
             .setVersionRequired(false)
             .setDefaultVersion("1")
-            .usePathSegment(0, versionPathPredicate);
+            .usePathSegment(0, ApiVersionWebConfig::isVersionedPath);
+    }
+
+    @Override
+    public void configurePathMatch(@NotNull PathMatchConfigurer configurer) {
+        configurer.addPathPrefix("/{version}", ApiVersionWebConfig::hasVersionedMethod);
+    }
+
+    private static boolean isVersionedPath(@NotNull RequestPath path) {
+        return V_PREFIXED.matcher(path.value()).matches();
+    }
+
+    private static boolean hasVersionedMethod(@NotNull Class<?> controllerClass) {
+        return Arrays.stream(controllerClass.getMethods())
+            .map(ApiVersionWebConfig::findRequestMapping)
+            .filter(Objects::nonNull)
+            .anyMatch(rm -> !rm.version().isEmpty());
+    }
+
+    private static RequestMapping findRequestMapping(@NotNull Method method) {
+        return AnnotatedElementUtils.findMergedAnnotation(method, RequestMapping.class);
     }
 
 }
