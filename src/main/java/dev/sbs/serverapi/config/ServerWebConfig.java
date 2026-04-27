@@ -8,8 +8,13 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.webmvc.error.ErrorController;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
+import org.springframework.http.converter.ByteArrayHttpMessageConverter;
+import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.GsonHttpMessageConverter;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.util.List;
 
 /**
  * Framework-level web configuration providing HTTP message converters and the shared
@@ -62,6 +67,28 @@ public class ServerWebConfig implements WebMvcConfigurer {
         GsonHttpMessageConverter converter = new GsonHttpMessageConverter();
         converter.setGson(this.gson);
         return converter;
+    }
+
+    /**
+     * Inserts a {@link ByteArrayHttpMessageConverter} that claims {@code application/json}
+     * at position 0 of the chain so SpringDoc's raw {@code byte[]} OpenAPI document is
+     * written verbatim instead of being JSON-serialized as an integer array by Gson.
+     *
+     * <p>Without this override, {@code GET /v3/api-docs} returns
+     * {@code [123,34,111,...]} (Gson serializing each byte as an int), which Scalar/Swagger
+     * UI can't parse as an OpenAPI document.</p>
+     *
+     * @param converters the message converter chain to extend
+     */
+    @Override
+    public void extendMessageConverters(@NotNull List<HttpMessageConverter<?>> converters) {
+        ByteArrayHttpMessageConverter byteArrayConverter = new ByteArrayHttpMessageConverter();
+        byteArrayConverter.setSupportedMediaTypes(List.of(
+            MediaType.APPLICATION_JSON,
+            MediaType.APPLICATION_OCTET_STREAM,
+            MediaType.ALL
+        ));
+        converters.add(0, byteArrayConverter);
     }
 
     /**

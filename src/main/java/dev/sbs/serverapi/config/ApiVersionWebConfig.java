@@ -56,11 +56,25 @@ public class ApiVersionWebConfig implements WebMvcConfigurer {
 
     @Override
     public void configurePathMatch(@NotNull PathMatchConfigurer configurer) {
-        configurer.addPathPrefix("/{version}", ApiVersionWebConfig::hasVersionedMethod);
+        configurer.addPathPrefix("/{version}", ApiVersionWebConfig::shouldPrefix);
     }
 
     private static boolean isVersionedPath(@NotNull RequestPath path) {
         return V_PREFIXED.matcher(path.value()).matches();
+    }
+
+    /**
+     * Defense-in-depth: never prefix springdoc's own controllers - their {@code /v3/api-docs}
+     * and Scalar endpoints must keep their declared paths. See springdoc-openapi
+     * <a href="https://github.com/springdoc/springdoc-openapi/issues/3163">issue #3163</a>.
+     * Then check the more restrictive condition: does this controller actually have any
+     * version-bearing handler methods.
+     */
+    private static boolean shouldPrefix(@NotNull Class<?> controllerClass) {
+        if (controllerClass.getPackageName().startsWith("org.springdoc"))
+            return false;
+
+        return hasVersionedMethod(controllerClass);
     }
 
     private static boolean hasVersionedMethod(@NotNull Class<?> controllerClass) {
