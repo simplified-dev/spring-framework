@@ -70,7 +70,9 @@ public final class ErrorPageRenderer {
 
         private final boolean escaped;
 
-        /** The token string as it appears in the HTML template. */
+        /**
+         * The token string as it appears in the HTML template.
+         */
         public @NotNull String token() {
             return "{{" + name() + "}}";
         }

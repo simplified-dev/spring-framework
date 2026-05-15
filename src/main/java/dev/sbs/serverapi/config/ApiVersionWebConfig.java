@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.http.server.RequestPath;
+import org.springframework.web.accept.SemanticApiVersionParser;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.config.annotation.ApiVersionConfigurer;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
@@ -32,7 +33,7 @@ import java.util.regex.Pattern;
  *       reject the request with 400.</li>
  * </ul>
  *
- * <p>Spring's default {@link org.springframework.web.accept.SemanticApiVersionParser}
+ * <p>Spring's default {@link SemanticApiVersionParser}
  * strips the {@code v} prefix and parses the remainder as semver, so handlers declare
  * {@code version = "1"} and {@code GET /v1/foo} routes correctly.</p>
  *

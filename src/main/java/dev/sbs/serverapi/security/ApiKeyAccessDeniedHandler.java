@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.web.access.AccessDeniedHandler;
 
 import java.io.IOException;
@@ -14,7 +15,7 @@ import java.io.IOException;
  * {@link AccessDeniedHandler} that renders content-negotiated 403 responses for authenticated
  * requests that fail authorization.
  *
- * <p>Activates when {@link org.springframework.security.access.prepost.PreAuthorize @PreAuthorize}
+ * <p>Activates when {@link PreAuthorize @PreAuthorize}
  * denies an authenticated principal. Delegates rendering to the shared
  * {@link ErrorResponseWriter}.</p>
  */

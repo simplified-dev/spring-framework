@@ -1,5 +1,6 @@
 package dev.sbs.serverapi.controller;
 
+import dev.sbs.serverapi.security.ApiKeyRole;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Test controller demonstrating {@link PreAuthorize} with role requirements
- * resolved through the {@link dev.sbs.serverapi.security.ApiKeyRole} hierarchy
+ * resolved through the {@link ApiKeyRole} hierarchy
  * under the {@code /api/} path prefix.
  */
 @RestController

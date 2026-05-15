@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -26,7 +27,7 @@ import java.util.concurrent.ConcurrentMap;
  * whether they are allowed. For authenticated requests, a {@link Bucket} keyed by
  * {@link ApiKey#getKeyValue()} is consulted; one token is consumed per request. On overflow,
  * a 429 response is written directly via {@link ErrorResponseWriter} - the filter chain runs
- * outside the {@link org.springframework.web.bind.annotation.ControllerAdvice} flow, so an
+ * outside the {@link ControllerAdvice} flow, so an
  * exception thrown here would land on Spring Boot's default error path rather than the
  * framework's content-negotiated renderer.</p>
  *

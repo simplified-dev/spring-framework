@@ -1,5 +1,7 @@
 package dev.sbs.serverapi.error;
 
+import dev.sbs.serverapi.security.ApiKeyAccessDeniedHandler;
+import dev.sbs.serverapi.security.ApiKeyAuthenticationEntryPoint;
 import dev.simplified.client.exception.ApiDecodeException;
 import dev.simplified.client.exception.ApiException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,8 +37,8 @@ import org.springframework.web.util.HtmlUtils;
  * responses.</p>
  *
  * <p>Spring Security 401/403 responses raised inside the security filter chain are
- * intercepted by {@link dev.sbs.serverapi.security.ApiKeyAuthenticationEntryPoint} and
- * {@link dev.sbs.serverapi.security.ApiKeyAccessDeniedHandler}, which delegate to the
+ * intercepted by {@link ApiKeyAuthenticationEntryPoint} and
+ * {@link ApiKeyAccessDeniedHandler}, which delegate to the
  * same {@link ErrorResponseWriter}. Method-security exceptions raised by
  * {@code @PreAuthorize} via AOP unwind through the dispatcher servlet before
  * {@code ExceptionTranslationFilter} can route them, so the {@link AccessDeniedException}

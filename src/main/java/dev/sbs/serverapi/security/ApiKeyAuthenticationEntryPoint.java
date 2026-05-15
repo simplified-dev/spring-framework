@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 
 import java.io.IOException;
 
@@ -15,7 +16,7 @@ import java.io.IOException;
  * unauthenticated requests to protected endpoints.
  *
  * <p>Spring Security routes authentication failures and "no credentials supplied" denials
- * here, before the request reaches the {@link org.springframework.web.bind.annotation.ControllerAdvice}.
+ * here, before the request reaches the {@link ControllerAdvice}.
  * Delegates rendering to the shared {@link ErrorResponseWriter}, so browsers receive an
  * HTML error page and API clients receive JSON.</p>
  */

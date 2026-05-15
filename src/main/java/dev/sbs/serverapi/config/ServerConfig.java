@@ -109,7 +109,7 @@ public final class ServerConfig {
 
     /**
      * Converts this configuration to a Spring Boot property map suitable for
-     * {@link org.springframework.boot.SpringApplication#setDefaultProperties}.
+     * {@link SpringApplication#setDefaultProperties}.
      *
      * @return an unmodifiable map of Spring Boot property keys to their string values
      */
@@ -230,223 +230,299 @@ public final class ServerConfig {
         @BuildFlag(nonNull = true)
         private HealthDetailsVisibility healthShowDetails = HealthDetailsVisibility.NEVER;
 
-        /** Sets the server port. */
+        /**
+         * Sets the server port.
+         */
         public @NotNull Builder withPort(int port) {
             this.port = port;
             return this;
         }
 
-        /** Sets the server bind address. */
+        /**
+         * Sets the server bind address.
+         */
         public @NotNull Builder withAddress(@NotNull String address) {
             this.address = address;
             return this;
         }
 
-        /** Sets the servlet context path. */
+        /**
+         * Sets the servlet context path.
+         */
         public @NotNull Builder withContextPath(@NotNull String contextPath) {
             this.contextPath = contextPath;
             return this;
         }
 
-        /** Sets the maximum number of Tomcat worker threads. */
+        /**
+         * Sets the maximum number of Tomcat worker threads.
+         */
         public @NotNull Builder withMaxThreads(int maxThreads) {
             this.maxThreads = maxThreads;
             return this;
         }
 
-        /** Sets the minimum number of spare Tomcat worker threads. */
+        /**
+         * Sets the minimum number of spare Tomcat worker threads.
+         */
         public @NotNull Builder withMinSpareThreads(int minSpareThreads) {
             this.minSpareThreads = minSpareThreads;
             return this;
         }
 
-        /** Sets whether virtual threads are enabled (Java 21+). */
+        /**
+         * Sets whether virtual threads are enabled (Java 21+).
+         */
         public @NotNull Builder withVirtualThreadsEnabled(boolean virtualThreadsEnabled) {
             this.virtualThreadsEnabled = virtualThreadsEnabled;
             return this;
         }
 
-        /** Sets the Tomcat accept queue length. */
+        /**
+         * Sets the Tomcat accept queue length.
+         */
         public @NotNull Builder withAcceptCount(int acceptCount) {
             this.acceptCount = acceptCount;
             return this;
         }
 
-        /** Sets the maximum number of concurrent Tomcat connections. */
+        /**
+         * Sets the maximum number of concurrent Tomcat connections.
+         */
         public @NotNull Builder withMaxConnections(int maxConnections) {
             this.maxConnections = maxConnections;
             return this;
         }
 
-        /** Sets the connection timeout in seconds. */
+        /**
+         * Sets the connection timeout in seconds.
+         */
         public @NotNull Builder withConnectionTimeout(int seconds) {
             this.connectionTimeout = seconds;
             return this;
         }
 
-        /** Sets the keep-alive timeout in seconds. */
+        /**
+         * Sets the keep-alive timeout in seconds.
+         */
         public @NotNull Builder withKeepAliveTimeout(int seconds) {
             this.keepAliveTimeout = seconds;
             return this;
         }
 
-        /** Sets the maximum number of keep-alive requests per connection. */
+        /**
+         * Sets the maximum number of keep-alive requests per connection.
+         */
         public @NotNull Builder withMaxKeepAliveRequests(int maxKeepAliveRequests) {
             this.maxKeepAliveRequests = maxKeepAliveRequests;
             return this;
         }
 
-        /** Sets whether response compression is enabled. */
+        /**
+         * Sets whether response compression is enabled.
+         */
         public @NotNull Builder withCompressionEnabled(boolean compressionEnabled) {
             this.compressionEnabled = compressionEnabled;
             return this;
         }
 
-        /** Sets the minimum response size to trigger compression. */
+        /**
+         * Sets the minimum response size to trigger compression.
+         */
         public @NotNull Builder withCompressionMinSize(@NotNull MemorySize compressionMinSize) {
             this.compressionMinSize = compressionMinSize;
             return this;
         }
 
-        /** Sets the MIME types eligible for compression. */
+        /**
+         * Sets the MIME types eligible for compression.
+         */
         public @NotNull Builder withCompressionMimeTypes(@NotNull ConcurrentList<String> compressionMimeTypes) {
             this.compressionMimeTypes = compressionMimeTypes;
             return this;
         }
 
-        /** Sets whether HTTP/2 is enabled. */
+        /**
+         * Sets whether HTTP/2 is enabled.
+         */
         public @NotNull Builder withHttp2Enabled(boolean http2Enabled) {
             this.http2Enabled = http2Enabled;
             return this;
         }
 
-        /** Sets the maximum HTTP request header size. */
+        /**
+         * Sets the maximum HTTP request header size.
+         */
         public @NotNull Builder withMaxRequestHeaderSize(@NotNull MemorySize maxRequestHeaderSize) {
             this.maxRequestHeaderSize = maxRequestHeaderSize;
             return this;
         }
 
-        /** Sets the maximum HTTP form post size. */
+        /**
+         * Sets the maximum HTTP form post size.
+         */
         public @NotNull Builder withMaxFormPostSize(@NotNull MemorySize maxFormPostSize) {
             this.maxFormPostSize = maxFormPostSize;
             return this;
         }
 
-        /** Sets whether multipart file uploads are enabled. */
+        /**
+         * Sets whether multipart file uploads are enabled.
+         */
         public @NotNull Builder withMultipartEnabled(boolean multipartEnabled) {
             this.multipartEnabled = multipartEnabled;
             return this;
         }
 
-        /** Sets the maximum file size for multipart uploads. */
+        /**
+         * Sets the maximum file size for multipart uploads.
+         */
         public @NotNull Builder withMultipartMaxFileSize(@NotNull MemorySize multipartMaxFileSize) {
             this.multipartMaxFileSize = multipartMaxFileSize;
             return this;
         }
 
-        /** Sets the maximum total request size for multipart uploads. */
+        /**
+         * Sets the maximum total request size for multipart uploads.
+         */
         public @NotNull Builder withMultipartMaxRequestSize(@NotNull MemorySize multipartMaxRequestSize) {
             this.multipartMaxRequestSize = multipartMaxRequestSize;
             return this;
         }
 
-        /** Sets the server shutdown mode. */
+        /**
+         * Sets the server shutdown mode.
+         */
         public @NotNull Builder withShutdownMode(@NotNull ShutdownMode shutdownMode) {
             this.shutdownMode = shutdownMode;
             return this;
         }
 
-        /** Sets the graceful shutdown timeout in seconds. */
+        /**
+         * Sets the graceful shutdown timeout in seconds.
+         */
         public @NotNull Builder withShutdownTimeout(int seconds) {
             this.shutdownTimeout = seconds;
             return this;
         }
 
-        /** Sets the forward headers strategy for reverse proxy support. */
+        /**
+         * Sets the forward headers strategy for reverse proxy support.
+         */
         public @NotNull Builder withForwardHeadersStrategy(@NotNull ForwardHeadersStrategy forwardHeadersStrategy) {
             this.forwardHeadersStrategy = forwardHeadersStrategy;
             return this;
         }
 
-        /** Sets the Spring application name. */
+        /**
+         * Sets the Spring application name.
+         */
         public @NotNull Builder withApplicationName(@NotNull String applicationName) {
             this.applicationName = applicationName;
             return this;
         }
 
-        /** Sets the root logging level. */
+        /**
+         * Sets the root logging level.
+         */
         public @NotNull Builder withRootLogLevel(@NotNull LogLevel rootLogLevel) {
             this.rootLogLevel = rootLogLevel;
             return this;
         }
 
-        /** Sets API key authentication to enable. */
+        /**
+         * Sets API key authentication to enable.
+         */
         public @NotNull Builder isApiKeyAuthEnabled() {
             return this.isApiKeyAuthEnabled(true);
         }
 
-        /** Sets whether API key authentication is enabled. */
+        /**
+         * Sets whether API key authentication is enabled.
+         */
         public @NotNull Builder isApiKeyAuthEnabled(boolean apiKeyAuthEnabled) {
             this.apiKeyAuthEnabled = apiKeyAuthEnabled;
             return this;
         }
 
-        /** Sets API key authentication to disable. */
+        /**
+         * Sets API key authentication to disable.
+         */
         public @NotNull Builder isApiKeyAuthDisabled() {
             return this.isApiKeyAuthEnabled(false);
         }
 
-        /** Sets SpringDoc OpenAPI documentation to enable. */
+        /**
+         * Sets SpringDoc OpenAPI documentation to enable.
+         */
         public @NotNull Builder isSpringdocEnabled() {
             return this.isSpringdocEnabled(true);
         }
 
-        /** Sets whether SpringDoc OpenAPI documentation is enabled. */
+        /**
+         * Sets whether SpringDoc OpenAPI documentation is enabled.
+         */
         public @NotNull Builder isSpringdocEnabled(boolean springdocEnabled) {
             this.springdocEnabled = springdocEnabled;
             return this;
         }
 
-        /** Sets SpringDoc OpenAPI documentation to disable. */
+        /**
+         * Sets SpringDoc OpenAPI documentation to disable.
+         */
         public @NotNull Builder isSpringdocDisabled() {
             return this.isSpringdocEnabled(true);
         }
 
-        /** Sets Spring Boot Actuator endpoints to enable. */
+        /**
+         * Sets Spring Boot Actuator endpoints to enable.
+         */
         public @NotNull Builder isActuatorEnabled() {
             return this.isActuatorEnabled(true);
         }
 
-        /** Sets whether Spring Boot Actuator endpoints are enabled. */
+        /**
+         * Sets whether Spring Boot Actuator endpoints are enabled.
+         */
         public @NotNull Builder isActuatorEnabled(boolean actuatorEnabled) {
             this.actuatorEnabled = actuatorEnabled;
             return this;
         }
 
-        /** Sets Spring Boot Actuator endpoints to disable. */
+        /**
+         * Sets Spring Boot Actuator endpoints to disable.
+         */
         public @NotNull Builder isActuatorDisabled() {
             return this.isActuatorEnabled(false);
         }
 
-        /** Sets the actuator endpoints exposed over HTTP. */
+        /**
+         * Sets the actuator endpoints exposed over HTTP.
+         */
         public @NotNull Builder withActuatorExposedEndpoints(@NotNull ConcurrentList<String> actuatorExposedEndpoints) {
             this.actuatorExposedEndpoints = actuatorExposedEndpoints;
             return this;
         }
 
-        /** Sets the base path for actuator endpoints. */
+        /**
+         * Sets the base path for actuator endpoints.
+         */
         public @NotNull Builder withActuatorBasePath(@NotNull String actuatorBasePath) {
             this.actuatorBasePath = actuatorBasePath;
             return this;
         }
 
-        /** Sets a separate port for management endpoints, or {@code -1} to use the server port. */
+        /**
+         * Sets a separate port for management endpoints, or {@code -1} to use the server port.
+         */
         public @NotNull Builder withManagementPort(int managementPort) {
             this.managementPort = managementPort;
             return this;
         }
 
-        /** Sets the visibility level for health endpoint details. */
+        /**
+         * Sets the visibility level for health endpoint details.
+         */
         public @NotNull Builder withHealthShowDetails(@NotNull HealthDetailsVisibility healthShowDetails) {
             this.healthShowDetails = healthShowDetails;
             return this;

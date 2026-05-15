@@ -4,6 +4,7 @@ import dev.simplified.collection.ConcurrentSet;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
@@ -13,7 +14,7 @@ import java.util.Collection;
  * An API key with associated {@link ApiKeyRole} roles and rate limit configuration.
  *
  * <p>Carried as the principal of an authenticated
- * {@link org.springframework.security.core.Authentication}. Rate-limit configuration
+ * {@link Authentication}. Rate-limit configuration
  * ({@link #getMaxRequests()}, {@link #getWindowInSeconds()}) is consumed by
  * {@link ApiKeyRateLimitFilter}.</p>
  */

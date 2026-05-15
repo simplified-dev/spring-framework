@@ -3,17 +3,19 @@ package dev.sbs.serverapi.security;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * {@link org.springframework.security.core.Authentication} implementation backed by an {@link ApiKey}.
+ * {@link Authentication} implementation backed by an {@link ApiKey}.
  *
  * <p>Constructed in two stages. The {@linkplain #unauthenticated(String) unauthenticated form}
  * carries only the raw key string from the {@code X-API-Key} header and is passed to the
- * {@link org.springframework.security.authentication.AuthenticationManager}. The
+ * {@link AuthenticationManager}. The
  * {@linkplain #authenticated(ApiKey, Collection) authenticated form} carries the resolved
  * {@link ApiKey} as its principal and the granted authorities derived from
  * {@link ApiKey#getPermissions()}.</p>
@@ -37,7 +39,7 @@ public final class ApiKeyAuthenticationToken extends AbstractAuthenticationToken
      * Creates an unauthenticated token carrying only the raw key string.
      *
      * @param keyValue the key string extracted from the {@code X-API-Key} header
-     * @return an unauthenticated token suitable for {@link org.springframework.security.authentication.AuthenticationManager#authenticate}
+     * @return an unauthenticated token suitable for {@link AuthenticationManager#authenticate}
      */
     public static @NotNull ApiKeyAuthenticationToken unauthenticated(@NotNull String keyValue) {
         return new ApiKeyAuthenticationToken(keyValue, null, Collections.emptyList());

@@ -10,6 +10,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.util.HtmlUtils;
 
 import java.io.IOException;
@@ -24,8 +27,8 @@ import java.util.Map;
  * <p>Performs content negotiation via the {@code Accept} header: browsers receive
  * Cloudflare-style HTML error pages from {@link ErrorPageRenderer}, API clients receive
  * JSON. Used by {@link ErrorController} for handler-level exceptions and by the Spring
- * Security {@link org.springframework.security.web.AuthenticationEntryPoint} and
- * {@link org.springframework.security.web.access.AccessDeniedHandler} which intercept
+ * Security {@link AuthenticationEntryPoint} and
+ * {@link AccessDeniedHandler} which intercept
  * 401/403 responses before they reach the controller advice.</p>
  */
 @RequiredArgsConstructor
@@ -38,7 +41,7 @@ public class ErrorResponseWriter {
     /**
      * Writes an error response directly to the servlet response, performing content
      * negotiation. Used by Spring Security entry points and access-denied handlers
-     * which run outside the {@link org.springframework.web.bind.annotation.ControllerAdvice}
+     * which run outside the {@link ControllerAdvice}
      * flow.
      *
      * @param request the current request

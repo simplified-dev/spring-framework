@@ -6,6 +6,7 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.AuthenticationEntryPoint;
 
 /**
  * {@link AuthenticationProvider} that resolves an {@link ApiKeyAuthenticationToken} against
@@ -14,7 +15,7 @@ import org.springframework.security.core.AuthenticationException;
  * <p>On a successful lookup, returns an authenticated token carrying the {@link ApiKey} as
  * its principal and the authorities derived from {@link ApiKey#getAuthorities()}. On an
  * unknown key, throws {@link BadCredentialsException} which Spring Security routes through
- * the configured {@link org.springframework.security.web.AuthenticationEntryPoint}.</p>
+ * the configured {@link AuthenticationEntryPoint}.</p>
  */
 @RequiredArgsConstructor
 public class ApiKeyAuthenticationProvider implements AuthenticationProvider {

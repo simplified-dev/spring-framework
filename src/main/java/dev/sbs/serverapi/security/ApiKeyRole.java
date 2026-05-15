@@ -1,13 +1,14 @@
 package dev.sbs.serverapi.security;
 
 import org.jetbrains.annotations.NotNull;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 
 /**
  * Hierarchical access roles assignable to an API key.
  *
  * <p>Declaration order defines the hierarchy - earlier entries inherit all permissions
  * of later entries. The hierarchy is materialized as a Spring Security
- * {@link org.springframework.security.access.hierarchicalroles.RoleHierarchy} bean in
+ * {@link RoleHierarchy} bean in
  * {@link ApiKeySecurityConfig}, derived from this enum's declaration order so adding a
  * constant requires no other changes.</p>
  */

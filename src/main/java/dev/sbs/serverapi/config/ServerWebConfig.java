@@ -2,6 +2,7 @@ package dev.sbs.serverapi.config;
 
 import com.google.gson.Gson;
 import dev.sbs.serverapi.error.ErrorResponseWriter;
+import dev.sbs.serverapi.security.ApiKeySecurityConfig;
 import dev.simplified.gson.GsonSettings;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.ObjectProvider;
@@ -14,6 +15,7 @@ import org.springframework.http.converter.json.GsonHttpMessageConverter;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Framework-level web configuration providing HTTP message converters and the shared
@@ -29,7 +31,7 @@ import java.util.List;
  *   <li>Endpoints returning {@code byte[]} (e.g. SpringDoc's {@code /v3/api-docs}) go through
  *       {@code ByteArrayHttpMessageConverter} - the bytes are written verbatim instead of
  *       Gson serializing each byte as a JSON int.</li>
- *   <li>Real DTOs and {@link java.util.Map}s go through Gson with the project's custom
+ *   <li>Real DTOs and {@link Map}s go through Gson with the project's custom
  *       {@code TypeAdapter} registrations.</li>
  * </ul>
  *
@@ -40,7 +42,7 @@ import java.util.List;
  * <p>Security response headers are not set here - Spring Security's
  * {@code HeadersConfigurer} handles {@code X-Content-Type-Options}, HSTS,
  * {@code X-Frame-Options}, and {@code Referrer-Policy} via
- * {@link dev.sbs.serverapi.security.ApiKeySecurityConfig}.</p>
+ * {@link ApiKeySecurityConfig}.</p>
  */
 @Configuration
 public class ServerWebConfig implements WebMvcConfigurer {
