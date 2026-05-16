@@ -347,7 +347,7 @@ controllers for exercising the framework without external dependencies.
 
 ### Running the TestServer
 
-Run `dev.sbs.serverapi.TestServer.main()` from your IDE to start a lightweight
+Run `dev.simplified.serverapi.TestServer.main()` from your IDE to start a lightweight
 server on port 8080, then exercise the framework features:
 
 ```bash
