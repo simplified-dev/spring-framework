@@ -7,30 +7,35 @@ See the root [`CLAUDE.md`](../CLAUDE.md) for cross-cutting patterns.
 ## Build & Test
 
 ```bash
-# From repo root
-./gradlew :server-api:build    # Build
-./gradlew :server-api:test     # Run all tests
+# From this repository's root
+./gradlew build                # Build
+./gradlew test                 # Run all tests
+./gradlew test -Dapi.key.authentication.enabled=false   # The auth-disabled path; RateLimitTest self-skips
+
+# From the workspace root composite, which substitutes the local projects
+./gradlew :Simplified-Dev:spring-framework:test
 ```
 
 ## Module Overview
 
-`server-api` is a reusable Spring Boot server framework library on **Spring Boot 4.0 / Spring Framework 7.0 / Spring Security 7.0**. It provides Spring 7's native API versioning, Spring Security-backed API key authentication, rate limiting (Bucket4j), error handling, and server configuration as a `java-library` that other Spring Boot applications consume. Follows the same pattern as `discord-api` (framework) vs `simplified-bot` (implementation).
+`spring-framework` is a reusable Spring Boot server framework library on **Spring Boot 4.0 / Spring Framework 7.0 / Spring Security 7.0**, published through JitPack as `com.github.simplified-dev:spring-framework`. It provides Spring 7's native API versioning, Spring Security-backed API key authentication, rate limiting (Bucket4j), error handling, and server configuration as a `java-library` that other Spring Boot applications consume. It is to its consumers what `discord4j-framework` is to a bot built on it; `SkyBlock-Simplified/server` is one such consumer.
 
-### Package: `dev.sbs.serverapi`
+### Package: `dev.simplified.serverapi`
 
-**Exports:** Spring Boot starters (`web`, `actuator`, `security`), `bucket4j-core`, `gson`, and the `simplified-dev` `client` and `gson-extras` libraries via `api()` dependencies. Consumers get all of these transitively, including `@PreAuthorize`, `Authentication`, the `@RequestMapping(version=...)` attribute, and the Bucket4j `Bucket` API.
+**Exports:** Spring Boot starters (`web`, `actuator`, `security`), `bucket4j-core`, `gson`, the log4j2 API, and the `simplified-dev` `client` and `gson-extras` libraries via `api()` dependencies. Consumers get all of these transitively, including `@PreAuthorize`, `Authentication`, the `@RequestMapping(version=...)` attribute, and the Bucket4j `Bucket` API.
 
 ### Package Structure
 
 **`config/`** - Server-wide configuration:
-- `ServerConfig` - Immutable configuration class following the `ClassBuilder` pattern. Inner `Builder` with `@BuildFlag` validation. Static factories: `builder()` for full control, `optimized()` for a production-tuned preset. `toProperties()` converts fields to a `ConcurrentMap<String, Object>` for `SpringApplication.setDefaultProperties()`. Includes `springdocEnabled` toggle controlling SpringDoc/Scalar properties.
+- `ServerConfig` - Immutable configuration class whose builder `@ClassBuilder` generates (private constructor, `with{}` setters and `is{}` flags, `@Negate` giving each toggle an `is...Disabled()` counterpart), with `@BuildFlag(nonNull = true)` validation. Each field's declared value is the builder's default - port `8080`, API key authentication on, SpringDoc on, Actuator off. Static factories: the generated `builder()` for full control, `optimized()` for a production-tuned preset. `toProperties()` converts fields to a `ConcurrentMap<String, Object>` for `SpringApplication.setDefaultProperties()`. Includes `springdocEnabled` toggle controlling SpringDoc/Scalar properties.
 - `ServerWebConfig` - Framework-level `WebMvcConfigurer` providing the `GsonHttpMessageConverter` (placed ahead of Jackson), the no-op `ErrorController` bean that displaces Spring Boot's `BasicErrorController`, and the shared `ErrorResponseWriter` bean. Uses a consumer-provided `Gson` `@Bean` if available, otherwise falls back to a default `Gson` created from `GsonSettings.defaults()`. Security response headers are set by Spring Security's `HeadersConfigurer` in `ApiKeySecurityConfig` rather than here.
 - `ApiVersionWebConfig` - `WebMvcConfigurer` wiring Spring 7's path-segment API versioning via two predicates: `usePathSegment(0, requestPathPredicate)` gates version extraction to URLs matching `/v<digits>/...` (so non-matching paths bypass extraction); `addPathPrefix("/{version}", classPredicate)` injects the `/{version}` prefix on any controller whose methods declare `version=` (so handlers don't repeat `/v1/` in their `path=`). The default `SemanticApiVersionParser` strips the `v` prefix and parses semver, so `@GetMapping(path = "/hello", version = "1")` is reachable at `/v1/hello`. **Constraint:** `addPathPrefix` is class-level, so don't mix versioned and unversioned methods on the same controller.
 
 **`error/`** - Global error handling and HTML error page rendering:
 - `ErrorController` - Global `@RestControllerAdvice` extending `ResponseEntityExceptionHandler`. Delegates content-negotiated rendering to `ErrorResponseWriter`. Includes explicit handlers for `AccessDeniedException` and `AuthenticationException` thrown by `@PreAuthorize` from inside controllers (these unwind to dispatcher servlet exception handling before Spring Security's `ExceptionTranslationFilter` sees them, so we route them to the same writer used by the entry point and access-denied handler). Mirrors the filter's "anonymous becomes 401" behavior. Also handles `MissingApiVersionException` and `InvalidApiVersionException` thrown by Spring 7's versioning machinery, mapping them to 400.
 - `ErrorResponseWriter` - Shared utility for content-negotiated error responses (HTML vs JSON). Used by `ErrorController` (returns `ResponseEntity`) and by Spring Security's `AuthenticationEntryPoint` / `AccessDeniedHandler` (writes directly to the response). Holds the `Gson` instance for JSON serialization.
-- `ErrorPageRenderer` - Non-instantiable utility class rendering Cloudflare-style HTML error pages. Contains `Placeholder` enum for named `{{TOKEN}}` substitution with XSS escaping, and `ErrorSource` enum (`CLIENT`, `SERVER`, `API`).
+- `ErrorPageRenderer` - Non-instantiable utility class rendering Cloudflare-style HTML error pages. Contains the `Placeholder` enum for named `{{TOKEN}}` substitution with XSS escaping.
+- `ErrorSource` - Enum (`CLIENT`, `SERVER`, `API`) naming which status column of the error page shows the error indicator.
 
 **`security/`** - Spring Security-backed API key authentication and authorization:
 - `ApiKey` - Authenticated principal carrying the key string, assigned `ApiKeyRole`s, and rate-limit configuration (`maxRequests`, `windowInSeconds`). `getAuthorities()` derives `SimpleGrantedAuthority("ROLE_" + name)` from the role set.
@@ -55,7 +60,13 @@ See the root [`CLAUDE.md`](../CLAUDE.md) for cross-cutting patterns.
 
 ### Test Source (`src/test/`)
 
-**`TestServer`** - Minimal `@SpringBootApplication` for testing the framework. Boots a lightweight server with API versioning, API key authentication, error handling, and the test controllers. Uses `ServerConfig.builder()` defaults with SpringDoc disabled. Run `main()` from the IDE to start on port 8080.
+**`TestServer`** - Minimal `@SpringBootApplication` for testing the framework, with API versioning, error handling and the test controllers. Its `main()`, run from the IDE, starts it on port 8080 with SpringDoc and Actuator on and API key authentication off. The integration tests boot it through `@SpringBootTest` with authentication on instead.
+
+**`ServerApiTest`** - Integration tests over `TestServer` with `api.key.authentication.enabled=true` and a test `ApiKeyStore`: versioned routing, role-gated endpoints (missing, unknown, insufficient and inherited roles), the security headers, and content-negotiated JSON and HTML errors.
+
+**`RateLimitTest`** - Bucket4j limits per `ApiKey`, over `TestServer` with its own `ApiKeyStore`. Every case self-skips when the build runs with `-Dapi.key.authentication.enabled=false`.
+
+**`config/ServerConfigBuilderTest`** - Pins the generated builder's defaults, which live in field initializers rather than in code a reader can see.
 
 **`controller/`** - Test controllers exercising framework features:
 - `TestApiKeyController` - Endpoints under `/api/` demonstrating `@PreAuthorize` with role requirements (`ADMIN`, `DEVELOPER`, `USER`) resolved through the `ApiKeyRole` hierarchy.
@@ -64,10 +75,14 @@ See the root [`CLAUDE.md`](../CLAUDE.md) for cross-cutting patterns.
 
 ### Consumer Usage
 
-Consumers must scan the `dev.sbs.serverapi` package for Spring to pick up configuration beans:
+Consumers depend on the JitPack coordinate and must scan the `dev.simplified.serverapi` package: the library ships no auto-configuration imports, so the component scan is the only way Spring picks up its configuration beans. Scanning any other package leaves every one of them unregistered, and Spring Boot's default security chain guards the application instead.
+
+```kotlin
+implementation("com.github.simplified-dev:spring-framework") { version { strictly("<commit sha>") } }
+```
 
 ```java
-@SpringBootApplication(scanBasePackages = { "com.example.myapp", "dev.sbs.serverapi" })
+@SpringBootApplication(scanBasePackages = { "com.example.myapp", "dev.simplified.serverapi" })
 public class MyApplication { }
 ```
 
@@ -80,7 +95,7 @@ public Gson gson() {
 }
 ```
 
-When `api.key.authentication.enabled=true` (the default), consumers **must** provide an `ApiKeyStore` bean. For quick bring-up, seed an `InMemoryApiKeyStore`:
+When `api.key.authentication.enabled` is `true` - the value `ServerConfig` supplies by default - consumers **must** provide an `ApiKeyStore` bean. For quick bring-up, seed an `InMemoryApiKeyStore`:
 
 ```java
 @Bean
