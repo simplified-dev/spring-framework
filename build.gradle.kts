@@ -38,7 +38,7 @@ dependencies {
 
     // Exported dependencies (available to consumers)
     api("com.github.simplified-dev:gson-extras") { version { strictly("3ac0d4f") } }
-    api("com.github.simplified-dev:client") { version { strictly("345de19") } }
+    api("com.github.simplified-dev:client") { version { strictly("1f1a2ae") } }
     api(libs.gson)
     // @Log emits a log4j2 field, so the API has to be on this module's own classpath
     api(libs.log4j2.api)
